@@ -1,0 +1,37 @@
+#!/bin/bash
+# Request one rekey, then wait for a replacement SA in the required state.
+set -eu
+if [[ $# != 2 || ( $1 != child && $1 != ike ) ]]; then
+    echo "usage: expect-rekey {child|ike} connection-name" >&2
+    exit 1
+fi
+kind=$1
+connection=$2
+
+snapshot() {
+    swanctl --list-sas --ike "$connection" 2>/dev/null |
+        awk -v kind="$kind" -v name="$connection:" '
+            $1 == name &&
+            ((kind == "ike" && $3 == "ESTABLISHED,") ||
+             (kind == "child" && $0 ~ /, INSTALLED,/)) {
+                gsub(/[# ,]/, "", $2); print $2
+            }'
+}
+
+old=$(snapshot)
+if [[ ! $old =~ ^[0-9]+$ ]]; then
+    echo "expected exactly one active $kind SA for $connection" >&2
+    exit 1
+fi
+# --rekey acknowledges job submission; its exit status is not completion.
+swanctl --rekey "--$kind-id" "$old" >/dev/null
+for ((i = 0; i < ${REKEY_WAIT_STEPS:-200}; i++)); do
+    current=$(snapshot)
+    if [[ $current =~ ^[0-9]+$ && $current != "$old" ]]; then
+        echo "Rekeyed $kind $connection: $old -> $current"
+        exit 0
+    fi
+    sleep "${REKEY_WAIT_INTERVAL:-0.1}"
+done
+echo "rekey did not replace $kind SA $old for $connection" >&2
+exit 1

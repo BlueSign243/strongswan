@@ -146,6 +146,7 @@ ARG_ENABL_SET([md4],            [enable MD4 software implementation plugin.])
 ARG_ENABL_SET([md5],            [enable MD5 software implementation plugin.])
 ARG_ENABL_SET([mgf1],           [enable the MGF1 software implementation plugin.])
 ARG_ENABL_SET([ml],             [enable Module-Lattice-based crypto (ML-KEM) plugin.])
+ARG_ENABL_SET([pqmagic],        [enable PQMagic Aigis-enc mode 2 SM3 plugin.])
 ARG_DISBL_SET([nonce],          [disable nonce generation plugin.])
 ARG_DISBL_SET([openssl],        [disable the OpenSSL crypto plugin.])
 ARG_ENABL_SET([wolfssl],        [enables the wolfSSL crypto plugin.])
@@ -1258,6 +1259,37 @@ if test x$unwind_backtraces = xtrue; then
 	AC_SUBST(UNWINDLIB)
 fi
 
+AC_ARG_VAR([PQMAGIC_CFLAGS], [C compiler flags for PQMagic])
+AC_ARG_VAR([PQMAGIC_LIBS], [linker flags for PQMagic (default: -lpqmagic_std)])
+if test x$pqmagic = xtrue; then
+	if test -z "$PQMAGIC_LIBS"; then
+		PQMAGIC_LIBS="-lpqmagic_std"
+	fi
+	pqmagic_save_CPPFLAGS="$CPPFLAGS"
+	pqmagic_save_LIBS="$LIBS"
+	CPPFLAGS="$CPPFLAGS $PQMAGIC_CFLAGS"
+	LIBS="$PQMAGIC_LIBS $LIBS"
+	AC_CHECK_HEADER([pqmagic_api.h], [],
+		[AC_MSG_ERROR([PQMagic header pqmagic_api.h not found; set PQMAGIC_CFLAGS])])
+	AC_MSG_CHECKING([for PQMagic Aigis-enc mode 2 std APIs])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pqmagic_api.h>]], [[
+		unsigned char pk[AIGIS_ENC_2_PUBLICKEYBYTES];
+		unsigned char sk[AIGIS_ENC_2_SECRETKEYBYTES];
+		unsigned char ct[AIGIS_ENC_2_CIPHERTEXTBYTES];
+		unsigned char ss[AIGIS_ENC_2_SSBYTES], coins[64] = {0};
+		int r = pqmagic_aigis_enc_2_std_keypair(pk, sk);
+		r |= pqmagic_aigis_enc_2_std_enc(ct, ss, pk);
+		r |= pqmagic_aigis_enc_2_std_dec(ss, ct, sk);
+		r |= pqmagic_aigis_enc_2_std_keypair_internal(pk, sk, coins);
+		r |= pqmagic_aigis_enc_2_std_enc_internal(ct, ss, pk, coins);
+		return r;
+	]])], [AC_MSG_RESULT([yes])],
+		[AC_MSG_ERROR([PQMagic Aigis-enc mode 2 std APIs not found; set PQMAGIC_LIBS])])
+	CPPFLAGS="$pqmagic_save_CPPFLAGS"
+	LIBS="$pqmagic_save_LIBS"
+	AC_DEFINE([HAVE_PQMAGIC], [1], [Define if the PQMagic plugin is enabled.])
+fi
+
 if test "x$testable_ke" = xyes; then
 	AC_DEFINE([TESTABLE_KE], [1], [Define to 1 if key exchange methods should be testable.])
 fi
@@ -1501,6 +1533,7 @@ ADD_PLUGIN([ctr],                  [s charon scripts nm cmd])
 ADD_PLUGIN([ccm],                  [s charon scripts nm cmd])
 ADD_PLUGIN([gcm],                  [s charon scripts nm cmd])
 ADD_PLUGIN([ml],                   [s charon scripts nm cmd])
+ADD_PLUGIN([pqmagic],              [s charon scripts nm cmd])
 ADD_PLUGIN([drbg],                 [s charon swanctl pki scripts nm cmd])
 ADD_PLUGIN([curl],                 [s charon pki scripts nm cmd])
 ADD_PLUGIN([files],                [s charon pki scripts nm cmd])
@@ -1653,6 +1686,7 @@ AM_CONDITIONAL(USE_CCM, test x$ccm = xtrue)
 AM_CONDITIONAL(USE_GCM, test x$gcm = xtrue)
 AM_CONDITIONAL(USE_DRBG, test x$drbg = xtrue)
 AM_CONDITIONAL(USE_ML, test x$ml = xtrue)
+AM_CONDITIONAL(USE_PQMAGIC, test x$pqmagic = xtrue)
 
 #  charon plugins
 # ----------------
@@ -1930,6 +1964,7 @@ AC_CONFIG_FILES([
 	src/libstrongswan/plugins/gcm/Makefile
 	src/libstrongswan/plugins/drbg/Makefile
 	src/libstrongswan/plugins/ml/Makefile
+	src/libstrongswan/plugins/pqmagic/Makefile
 	src/libstrongswan/plugins/test_vectors/Makefile
 	src/libstrongswan/tests/Makefile
 	src/libipsec/Makefile

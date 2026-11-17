@@ -75,6 +75,8 @@ enum key_exchange_method_t {
 	ML_KEM_1024   = 37,
 	/** insecure NULL diffie hellman group for testing, in PRIVATE USE */
 	MODP_NULL     = 1024,
+	/** Experimental PQMagic Aigis-enc mode 2 with SM3, PRIVATE USE. */
+	AIGIS_ENC_2_SM3 = 65002,
 	/** MODP group with custom generator/prime */
 	/** internally used DH group with additional parameters g and p, outside
 	 * of PRIVATE USE (i.e. IKEv2 DH group range) so it can't be negotiated */

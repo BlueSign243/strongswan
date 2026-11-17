@@ -1,0 +1,4 @@
+Host-to-host tunnel with certificate authentication and mandatory ECP-256 +
+PQMagic Aigis-enc mode 2 SM3 hybrid key exchange. Experimental private KE ID
+65002. Both guest images require the pqmagic plugin and matching SM3 library.
+Checks IKE_INTERMEDIATE, CHILD/IKE rekey, bidirectional ping and ESP traffic.

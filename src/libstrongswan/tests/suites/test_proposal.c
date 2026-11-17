@@ -605,6 +605,44 @@ START_TEST(test_clone)
 }
 END_TEST
 
+START_TEST(test_aigis_hybrid_proposal)
+{
+	proposal_t *a, *b, *selected;
+	uint16_t alg;
+
+	a = proposal_create_from_string(PROTO_IKE,
+		"aes256gcm16-prfsha384-ecp256-ke1_aigisenc2sm3");
+	ck_assert(a);
+	ck_assert(a->get_algorithm(a, ADDITIONAL_KEY_EXCHANGE_1, &alg, NULL));
+	ck_assert_int_eq(alg, 65002);
+	ck_assert(proposal_has_additional_ke(a));
+	b = a->clone(a, 0);
+	selected = a->select(a, b, 0);
+	ck_assert(selected);
+	selected->destroy(selected);
+	/* Private-use filtering must apply to this experimental transform. */
+	selected = a->select(a, b, PROPOSAL_SKIP_PRIVATE);
+	ck_assert(!selected);
+	b->destroy(b);
+	b = proposal_create_from_string(PROTO_IKE,
+		"aes256gcm16-prfsha384-ecp256-ke1_mlkem768");
+	ck_assert(b);
+	ck_assert(!a->select(a, b, 0));
+	b->destroy(b);
+	b = proposal_create_from_string(PROTO_IKE,
+		"aes256gcm16-prfsha384-ecp256");
+	ck_assert(b);
+	ck_assert(!a->select(a, b, 0));
+	b->destroy(b);
+	a->destroy(a);
+	a = proposal_create_from_string(PROTO_ESP,
+		"aes256gcm16-ecp256-ke1_aigisenc2sm3");
+	ck_assert(a);
+	ck_assert(a->has_transform(a, ADDITIONAL_KEY_EXCHANGE_1, 65002));
+	a->destroy(a);
+}
+END_TEST
+
 Suite *proposal_suite_create()
 {
 	Suite *s;
@@ -614,6 +652,7 @@ Suite *proposal_suite_create()
 
 	tc = tcase_create("proposal keywords");
 	tcase_add_test(tc, test_dh_group_mapping);
+	tcase_add_test(tc, test_aigis_hybrid_proposal);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("create_from_string");

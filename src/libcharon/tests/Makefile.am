@@ -25,6 +25,7 @@ libcharon_tests_LDADD = \
 
 
 exchange_tests_SOURCES = \
+  suites/test_aigis.c \
   suites/test_child_create.c \
   suites/test_child_delete.c \
   suites/test_child_rekey.c \

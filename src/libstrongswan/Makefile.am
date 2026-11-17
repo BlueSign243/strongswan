@@ -649,6 +649,13 @@ if MONOLITHIC
 endif
 endif
 
+if USE_PQMAGIC
+  SUBDIRS += plugins/pqmagic
+if MONOLITHIC
+  libstrongswan_la_LIBADD += plugins/pqmagic/libstrongswan-pqmagic.la
+endif
+endif
+
 if USE_TEST_VECTORS
   SUBDIRS += plugins/test_vectors
 if MONOLITHIC

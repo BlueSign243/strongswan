@@ -21,3 +21,6 @@ TEST_SUITE(child_create_suite_create)
 TEST_SUITE(child_delete_suite_create)
 TEST_SUITE(child_rekey_suite_create)
 TEST_SUITE(childless_suite_create)
+#ifdef HAVE_PQMAGIC
+TEST_SUITE(aigis_suite_create)
+#endif
