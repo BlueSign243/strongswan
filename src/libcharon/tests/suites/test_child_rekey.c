@@ -22,6 +22,7 @@
 #include <tests/utils/exchange_test_asserts.h>
 #include <tests/utils/job_asserts.h>
 #include <tests/utils/sa_asserts.h>
+#include <tests/utils/mock_dh.h>
 
 /**
  * Initiate rekeying the CHILD_SA with the given SPI on the given IKE_SA.
@@ -155,20 +156,45 @@ static exchange_test_sa_conf_t multi_ke_conf = {
 START_TEST(test_regular_multi_ke)
 {
 	ike_sa_t *a, *b;
-	uint32_t spi_a = _i+1, spi_b = 2-_i;
+	uint32_t spi_a = (_i & 1)+1, spi_b = 2-(_i & 1);
 
+	exchange_test_sa_conf_t conf = multi_ke_conf;
+
+#ifdef HAVE_PQMAGIC
+	if (_i >= 2)
+	{
+		/* Exercise real OpenSSL ECDH and real PQMagic, with no mock KE. */
+		lib->crypto->remove_ke(lib->crypto, (ke_constructor_t)mock_dh_create);
+		conf.initiator.ike = conf.responder.ike =
+			"aes256gcm16-prfsha384-ecp256-ke1_aigisenc2sm3";
+		conf.initiator.esp = conf.responder.esp =
+			"aes256gcm16-ecp256-ke1_aigisenc2sm3";
+		lib->settings->set_bool(lib->settings, "%s.accept_private_algs",
+								TRUE, lib->ns);
+	}
+#endif
 	assert_track_sas_start();
 
-	if (_i)
+	if (_i & 1)
 	{	/* responder rekeys the CHILD_SA (SPI 2) */
 		exchange_test_helper->establish_sa(exchange_test_helper,
-										   &b, &a, &multi_ke_conf);
+										   &b, &a, &conf);
 	}
 	else
 	{	/* initiator rekeys the CHILD_SA (SPI 1) */
 		exchange_test_helper->establish_sa(exchange_test_helper,
-										   &a, &b, &multi_ke_conf);
+										   &a, &b, &conf);
 	}
+#ifdef HAVE_PQMAGIC
+	if (_i >= 2)
+	{
+		proposal_t *proposal = a->get_proposal(a);
+		ck_assert(proposal->has_transform(proposal, ADDITIONAL_KEY_EXCHANGE_1,
+										 AIGIS_ENC_2_SM3));
+		assert_ike_sa_state(a, IKE_ESTABLISHED);
+		assert_ike_sa_state(b, IKE_ESTABLISHED);
+	}
+#endif
 	initiate_rekey(a, spi_a);
 	assert_ipsec_sas_installed(a, spi_a, spi_b);
 
@@ -4554,7 +4580,11 @@ Suite *child_rekey_suite_create()
 
 	tc = tcase_create("regular");
 	tcase_add_loop_test(tc, test_regular, 0, 2);
+#ifdef HAVE_PQMAGIC
+	tcase_add_loop_test(tc, test_regular_multi_ke, 0, 4);
+#else
 	tcase_add_loop_test(tc, test_regular_multi_ke, 0, 2);
+#endif
 	tcase_add_loop_test(tc, test_regular_ke_invalid, 0, 2);
 	tcase_add_loop_test(tc, test_regular_ke_invalid_multi_ke, 0, 2);
 	tcase_add_test(tc, test_regular_responder_ignore_soft_expire);

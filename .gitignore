@@ -58,3 +58,4 @@ nbproject/
 *.[si]
 .cache/clangd
 compile_commands.json
+/.local-pqmagic/

@@ -56,7 +56,9 @@ ENUM_NEXT(key_exchange_method_names, MODP_1024_160, ML_KEM_1024, ECP_521_BIT,
 	"ML_KEM_1024");
 ENUM_NEXT(key_exchange_method_names, MODP_NULL, MODP_NULL, ML_KEM_1024,
 	"MODP_NULL");
-ENUM_NEXT(key_exchange_method_names, MODP_CUSTOM, MODP_CUSTOM, MODP_NULL,
+ENUM_NEXT(key_exchange_method_names, AIGIS_ENC_2_SM3, AIGIS_ENC_2_SM3, MODP_NULL,
+	"AIGIS_ENC_2_SM3");
+ENUM_NEXT(key_exchange_method_names, MODP_CUSTOM, MODP_CUSTOM, AIGIS_ENC_2_SM3,
 	"MODP_CUSTOM");
 ENUM_END(key_exchange_method_names, MODP_CUSTOM);
 
@@ -94,7 +96,9 @@ ENUM_NEXT(key_exchange_method_names_short, MODP_1024_160, ML_KEM_1024, ECP_521_B
 	"mlkem1024");
 ENUM_NEXT(key_exchange_method_names_short, MODP_NULL, MODP_NULL, ML_KEM_1024,
 	"modpnull");
-ENUM_NEXT(key_exchange_method_names_short, MODP_CUSTOM, MODP_CUSTOM, MODP_NULL,
+ENUM_NEXT(key_exchange_method_names_short, AIGIS_ENC_2_SM3, AIGIS_ENC_2_SM3, MODP_NULL,
+	"aigisenc2sm3");
+ENUM_NEXT(key_exchange_method_names_short, MODP_CUSTOM, MODP_CUSTOM, AIGIS_ENC_2_SM3,
 	"modpcustom");
 ENUM_END(key_exchange_method_names_short, MODP_CUSTOM);
 
@@ -625,6 +629,7 @@ bool key_exchange_is_kem(key_exchange_method_t ke)
 		case ML_KEM_512:
 		case ML_KEM_768:
 		case ML_KEM_1024:
+		case AIGIS_ENC_2_SM3:
 			return TRUE;
 		default:
 			return FALSE;
@@ -694,6 +699,7 @@ bool key_exchange_check_pubkey_len(key_exchange_method_t ke, chunk_t value)
 		case ML_KEM_512:
 		case ML_KEM_768:
 		case ML_KEM_1024:
+		case AIGIS_ENC_2_SM3:
 			/* verification currently not supported, do in plugin */
 			valid = FALSE;
 			break;

@@ -1,0 +1,10 @@
+moon::swanctl --list-algs 2> /dev/null::AIGIS_ENC_2_SM3\[pqmagic\]::YES
+moon::cat /tmp/aigis-child-rekey.log::Rekeyed child host-host: [0-9]+ -> [0-9]+::YES
+sun::cat /tmp/aigis-ike-rekey.log::Rekeyed ike host-host: [0-9]+ -> [0-9]+::YES
+sun::swanctl --list-algs 2> /dev/null::AIGIS_ENC_2_SM3\[pqmagic\]::YES
+moon::swanctl --list-sas --raw 2> /dev/null::host-host.*state=ESTABLISHED.*dh-group=ECP_256 ake1=AIGIS_ENC_2_SM3.*child-sas.*state=INSTALLED mode=TUNNEL.*encr-alg=AES_GCM_16 encr-keysize=256::YES
+sun::swanctl --list-sas --raw 2> /dev/null::host-host.*state=ESTABLISHED.*dh-group=ECP_256 ake1=AIGIS_ENC_2_SM3.*child-sas.*state=INSTALLED mode=TUNNEL.*encr-alg=AES_GCM_16 encr-keysize=256::YES
+moon::ping -c 2 192.168.0.2::64 bytes from 192.168.0.2::YES
+sun::ping -c 2 192.168.0.1::64 bytes from 192.168.0.1::YES
+sun::tcpdump::IP moon.strongswan.org > sun.strongswan.org: ESP::YES
+sun::tcpdump::IP sun.strongswan.org > moon.strongswan.org: ESP::YES

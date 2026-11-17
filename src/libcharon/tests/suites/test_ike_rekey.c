@@ -20,6 +20,7 @@
 #include <tests/utils/exchange_test_asserts.h>
 #include <tests/utils/job_asserts.h>
 #include <tests/utils/sa_asserts.h>
+#include <tests/utils/mock_dh.h>
 
 /**
  * Initiate rekeying the given IKE_SA.
@@ -127,18 +128,43 @@ START_TEST(test_regular_multi_ke)
 	ike_sa_t *a, *b, *new_sa;
 	status_t s;
 
+	exchange_test_sa_conf_t conf = multi_ke_conf;
+
+#ifdef HAVE_PQMAGIC
+	if (_i >= 2)
+	{
+		/* Exercise real OpenSSL ECDH and real PQMagic, with no mock KE. */
+		lib->crypto->remove_ke(lib->crypto, (ke_constructor_t)mock_dh_create);
+		conf.initiator.ike = conf.responder.ike =
+			"aes256gcm16-prfsha384-ecp256-ke1_aigisenc2sm3";
+		conf.initiator.esp = conf.responder.esp =
+			"aes256gcm16-ecp256-ke1_aigisenc2sm3";
+		lib->settings->set_bool(lib->settings, "%s.accept_private_algs",
+								TRUE, lib->ns);
+	}
+#endif
 	assert_track_sas_start();
 
-	if (_i)
+	if (_i & 1)
 	{	/* responder rekeys the IKE_SA */
 		exchange_test_helper->establish_sa(exchange_test_helper,
-										   &b, &a, &multi_ke_conf);
+										   &b, &a, &conf);
 	}
 	else
 	{	/* initiator rekeys the IKE_SA */
 		exchange_test_helper->establish_sa(exchange_test_helper,
-										   &a, &b, &multi_ke_conf);
+										   &a, &b, &conf);
 	}
+#ifdef HAVE_PQMAGIC
+	if (_i >= 2)
+	{
+		proposal_t *proposal = a->get_proposal(a);
+		ck_assert(proposal->has_transform(proposal, ADDITIONAL_KEY_EXCHANGE_1,
+										 AIGIS_ENC_2_SM3));
+		assert_ike_sa_state(a, IKE_ESTABLISHED);
+		assert_ike_sa_state(b, IKE_ESTABLISHED);
+	}
+#endif
 	/* these should never get called as this results in a successful rekeying */
 	assert_hook_not_called(ike_updown);
 	assert_hook_not_called(child_updown);
@@ -2724,7 +2750,11 @@ Suite *ike_rekey_suite_create()
 
 	tc = tcase_create("regular");
 	tcase_add_loop_test(tc, test_regular, 0, 2);
+#ifdef HAVE_PQMAGIC
+	tcase_add_loop_test(tc, test_regular_multi_ke, 0, 4);
+#else
 	tcase_add_loop_test(tc, test_regular_multi_ke, 0, 2);
+#endif
 	tcase_add_loop_test(tc, test_regular_ke_invalid, 0, 2);
 	tcase_add_loop_test(tc, test_regular_ke_invalid_multi_ke, 0, 2);
 	suite_add_tcase(s, tc);

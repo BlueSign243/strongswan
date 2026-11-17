@@ -1,4 +1,4 @@
-EXTRA_DIST = git-version
+EXTRA_DIST = git-version build-pqmagic-aigis.sh tests/test_aigis_rekey_wait.py
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/libstrongswan \
