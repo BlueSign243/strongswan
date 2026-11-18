@@ -150,6 +150,8 @@ chmod 600 aigisCompositeCaKey.pem moonCompositeKey.pem
 
 确认 `--verify` 成功、`cmp` 无输出且退出 0，moon 证书含预期 SAN `moon.strongswan.org`、有效期及 digitalSignature 用途。复合 CA 的 keyUsage 含 keyCertSign。CA 和叶子的公钥类型应为 `COMPOSITE_AIGIS_SIG2_ED25519`，签名方案为 `COMPOSITE_AIGIS_SIG2_ED25519_SHA512`。
 
+早期实现的 PKCS#8 分派可能在命令成功时仍输出 `reached depth limit (10)`：完整私钥被重复提交到同一解析器，触及上限后才回退至算法加载器。此缺陷已修复，并增加 PKI 回归断言；两端应使用包含修复的构建。遇到旧日志时先用修复后的 `pki` 重新验证证书链和完整公钥匹配，不要因此重新生成 CA 或端点私钥。若使用系统已安装的 `pki`/daemon，须在第 5 章安装更新后的插件；本章的 `pki` 函数直接使用重新编译后的仓库插件。
+
 ### 4.3 moon → sun：经共享文件夹传输 CA 证书
 
 moon 已确认的 VMware 共享挂载为 `/mnt/hgfs/share`。以下约定 Windows 上同一个共享目录中的 `aigissig-m2` 作为本轮中转目录。sun 若挂载路径不同，只修改 sun 的 `SIG_SHARE`，确保仍指向 Windows 上同一个目录。不要把整个 `~/ipsec-lab` 复制到共享文件夹。

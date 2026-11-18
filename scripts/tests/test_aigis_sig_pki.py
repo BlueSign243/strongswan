@@ -16,6 +16,8 @@ class PkiTests(unittest.TestCase):
             def pki(*args, data=None, okay=True):
                 p = subprocess.run([*PKI, *args], input=data, capture_output=True)
                 self.assertEqual(p.returncode == 0, okay, p.stderr.decode(errors='replace'))
+                self.assertNotIn(b'reached depth limit', p.stderr,
+                                 'credential loading must not depend on exhausting the factory recursion limit')
                 return p.stdout
             def write(name, data):
                 path = d / name

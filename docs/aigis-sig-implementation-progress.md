@@ -73,3 +73,11 @@
 分配 sanitizer 测试的隔离进程仅加载 OpenSSL default provider；默认 legacy provider 的现有生命周期曾产生依赖层泄漏报告，因此该测试显式禁用无关 legacy provider，并执行 OpenSSL 清理。该结果只证明记录范围内的新增代码和该隔离配置；没有声称整个 strongSwan/OpenSSL 的所有 provider 已通过泄漏审计。ASan/UBSan 也未对上游库所有源文件进行全覆盖插桩。
 
 仍待单独完成：独立组合密码分析、PQMagic 内部清理加固、实际 daemon/swanctl 凭据装载、两端 M1/M2 初建与完整重新认证、双端 IKE/Child rekey、网络丢包与分片重传、实际 ESP 双向计数，以及在线吊销场景。本轮没有执行系统安装、服务重启、远程连接或现网配置替换。
+
+## 5. 双机准备期间的 PKCS#8 递归修正
+
+用户在 moon 生成真实实验凭据时，发现成功命令同时报告 `reached depth limit (10)`。已复现：PKCS#8 的具体类型入口将完整新算法容器交回凭据工厂，工厂再次选择同一入口形成递归，到深度上限后其他 builder 才成功加载。原 PKI 测试只断言返回码和凭据结果，未检查该异常诊断。
+
+修正为仅由 `KEY_ANY` 分派完整新算法容器，具体类型请求交给相应算法 loader，保留严格 DER 和类型错配拒绝行为。补充 PKI 子进程递归告警断言，先确认旧实现触发测试失败，再验证修正通过。重新构建、完整 77 suites 和 4 个 Aigis Python 测试通过，证据在 `.local-pqmagic/evidence/pkcs8-recursion-{red,build,python,check}.log`。
+
+已使用修复后的仓库工具只读核对 moon 现存 CA 和端点凭据：CA 私钥/证书、moon 私钥/证书的完整 SPKI 分别匹配，moon 证书链可信且有效，不再出现递归告警。未改写或重新生成这些凭据，仍待 sun 凭据交换及真实双机验收。

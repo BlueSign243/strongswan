@@ -41,7 +41,7 @@ static const asn1Object_t pkinfoObjects[] = {
 /**
  * Load a generic private key from an ASN.1 encoded blob
  */
-static private_key_t *parse_private_key(chunk_t blob)
+static private_key_t *parse_private_key(key_type_t requested_type, chunk_t blob)
 {
 	asn1_parser_t *parser;
 	chunk_t object, params = chunk_empty;
@@ -83,6 +83,14 @@ static private_key_t *parse_private_key(chunk_t blob)
 						break;
 					case OID_AIGIS_SIG2_SM3:
 					case OID_AIGIS_SIG2_ED25519_SHA512:
+						/* These loaders consume the full PKCS#8 container.
+						 * Dispatch only from KEY_ANY; a concrete request must
+						 * fall through to its algorithm loader instead of
+						 * resubmitting the same type and blob recursively. */
+						if (requested_type != KEY_ANY)
+						{
+							goto end;
+						}
 						type = key_type_from_signature_scheme(signature_scheme_from_oid(oid));
 						key = lib->creds->create(lib->creds, CRED_PRIVATE_KEY, type,
 							BUILD_BLOB_ASN1_DER, blob, BUILD_END);
@@ -265,7 +273,7 @@ private_key_t *pkcs8_private_key_load(key_type_t type, va_list args)
 	key = parse_encrypted_private_key(type, blob);
 	if (!key)
 	{
-		key = parse_private_key(blob);
+		key = parse_private_key(type, blob);
 	}
 	/* Preserve existing algorithms' compatibility; experimental concrete types
 	 * must never accept a different OID through the generic PKCS8 fallback. */
