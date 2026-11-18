@@ -74,7 +74,9 @@ Type of the input. One of \fIpub\fR (public key), \fIpriv\fR (private key),
 \fIrsa\fR (RSA private key), \fIecdsa\fR (ECDSA private key),
 \fIed25519\fR (Ed25519 private key), \fIed448\fR (Ed448 private key) or
 \fIpkcs10\fR (PKCS#10 certificate request),
-defaults to \fIpub\fR.
+defaults to \fIpub\fR. The experimental private key types \fIaigissig2sm3\fR and
+\fIaigissig2ed25519\fR are also accepted. A composite CA uses SHA-512;
+an explicitly incompatible digest is rejected.
 .TP
 .BI "\-k, \-\-cakey " file
 CA private key file. Either this or

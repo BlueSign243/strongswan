@@ -46,11 +46,15 @@ Read command line options from \fIfile\fR.
 .TP
 .BI "\-t, \-\-type " type
 Type of key to generate. Either \fIrsa\fR, \fIecdsa\fR, \fIed25519\fR,
-or \fIed448\fR, defaults to \fIrsa\fR.
+\fIed448\fR, \fIaigissig2sm3\fR (experimental Aigis-sig mode 2 / SM3), or
+\fIaigissig2ed25519\fR (experimental composite Aigis-sig / Ed25519),
+defaults to \fIrsa\fR. The experimental types require the pqmagic-sign feature.
 .TP
 .BI "\-s, \-\-size " bits
 Key length in bits. Defaults to 2048 for \fIrsa\fR and 384 for \fIecdsa\fR.
 For \fIecdsa\fR only three values are currently supported: 256, 384 and 521.
+For \fIaigissig2sm3\fR and \fIaigissig2ed25519\fR only the default or 256 is
+accepted; this interface value describes the seed size, not a security level.
 .TP
 .BI "\-p, \-\-safe\-primes"
 Generate RSA safe primes.

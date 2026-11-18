@@ -61,6 +61,14 @@ static int req()
 				{
 					type = KEY_RSA;
 				}
+				else if (streq(arg, "aigissig2sm3"))
+				{
+					type = KEY_AIGIS_SIG2_SM3;
+				}
+				else if (streq(arg, "aigissig2ed25519"))
+				{
+					type = KEY_COMPOSITE_AIGIS_SIG2_ED25519;
+				}
 				else if (streq(arg, "ecdsa"))
 				{
 					type = KEY_ECDSA;
@@ -273,7 +281,7 @@ static void __attribute__ ((constructor))reg()
 	command_register((command_t) {
 		req, 'r', "req",
 		"create a PKCS#10 certificate request",
-		{"[--in file|--keyid hex] [--type rsa|ecdsa|priv]",
+		{"[--in file|--keyid hex] [--type rsa|aigissig2sm3|aigissig2ed25519|ecdsa|priv]",
 		 "--oldreq file|--dn distinguished-name [--san subjectAltName]+",
 		 "[--flag serverAuth|clientAuth|ocspSigning|msSmartcardLogon]+",
 		 "[--profile server|client|dual|ocsp] [--password challengePassword]",

@@ -81,6 +81,12 @@ static private_key_t *parse_private_key(chunk_t blob)
 					case OID_EC_PUBLICKEY:
 						type = KEY_ECDSA;
 						break;
+					case OID_AIGIS_SIG2_SM3:
+					case OID_AIGIS_SIG2_ED25519_SHA512:
+						type = key_type_from_signature_scheme(signature_scheme_from_oid(oid));
+						key = lib->creds->create(lib->creds, CRED_PRIVATE_KEY, type,
+							BUILD_BLOB_ASN1_DER, blob, BUILD_END);
+						goto end;
 					case OID_ED25519:
 						type = KEY_ED25519;
 						part = BUILD_EDDSA_PRIV_ASN1_DER;
@@ -260,6 +266,14 @@ private_key_t *pkcs8_private_key_load(key_type_t type, va_list args)
 	if (!key)
 	{
 		key = parse_private_key(blob);
+	}
+	/* Preserve existing algorithms' compatibility; experimental concrete types
+	 * must never accept a different OID through the generic PKCS8 fallback. */
+	if (key && (type == KEY_AIGIS_SIG2_SM3 || type == KEY_COMPOSITE_AIGIS_SIG2_ED25519) &&
+		key->get_type(key) != type)
+	{
+		key->destroy(key);
+		key = NULL;
 	}
 	return key;
 }

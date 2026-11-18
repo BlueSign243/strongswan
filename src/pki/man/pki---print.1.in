@@ -56,6 +56,8 @@ Revocation List, CRL), \fIac\fR (Attribute Certificate), \fIpub\fR (public key),
 private key), \fIed25519\fR (Ed25519 private key), \fIed448\fR (Ed448 private
 key), \fIocsp-req\fR (OCSP request), \fIocsp-rsp\fR (OCSP response),
 defaults to \fIx509\fR.
+The experimental private key types \fIaigissig2sm3\fR and
+\fIaigissig2ed25519\fR are also accepted.
 .
 .SH "SEE ALSO"
 .

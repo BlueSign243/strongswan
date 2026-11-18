@@ -203,6 +203,22 @@ START_TEST(test_sig_constraints_rsa_pss)
 }
 END_TEST
 
+START_TEST(test_composite_constraints)
+{
+	auth_cfg_t *cfg = auth_cfg_create(), *actual = auth_cfg_create();
+	signature_params_t *p;
+	cfg->add_pubkey_constraints(cfg, _i ? "aigissig2ed25519-sha512" :
+		"ike:aigissig2ed25519-sha512", TRUE);
+	p = cfg->get(cfg, AUTH_RULE_IKE_SIGNATURE_SCHEME);
+	ck_assert_msg(p, "composite auth token must not become unconstrained pubkey");
+	ck_assert_int_eq(p->scheme, SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512);
+	actual->add(actual, AUTH_RULE_IKE_SIGNATURE_SCHEME, signature_params_clone(p));
+	ck_assert_int_eq(actual->complies(actual, cfg, FALSE), !_i);
+	actual->destroy(actual);
+	cfg->destroy(cfg);
+}
+END_TEST
+
 Suite *auth_cfg_suite_create()
 {
 	Suite *s;
@@ -211,6 +227,7 @@ Suite *auth_cfg_suite_create()
 	s = suite_create("auth_cfg");
 
 	tc = tcase_create("add_pubkey_constraints");
+	tcase_add_loop_test(tc, test_composite_constraints, 0, 2);
 	tcase_add_loop_test(tc, test_sig_constraints, 0, countof(sig_constraints_tests));
 	tcase_add_loop_test(tc, test_ike_constraints_fallback, 0, countof(sig_constraints_tests));
 	suite_add_tcase(s, tc);

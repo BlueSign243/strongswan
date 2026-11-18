@@ -1,4 +1,12 @@
 EXTRA_DIST = git-version build-pqmagic-aigis.sh tests/test_aigis_rekey_wait.py
+EXTRA_DIST += aigis-sig-create-test-pki.sh pki-local.sh \
+  tests/generate_aigis_sig_vectors.py \
+  tests/run_aigis_sig_alloc.sh tests/run_aigis_sig_matrix.sh \
+  tests/run_aigis_sig_mutations.py tests/run_aigis_sig_primitive.sh \
+  tests/run_aigis_sig_provider_checks.sh tests/run_aigis_sig_vici.sh \
+  tests/test_aigis_sig_alloc.c tests/test_aigis_sig_pki.py \
+  tests/test_aigis_sig_primitive.c tests/test_aigis_sig_vici.c \
+  tests/test_pqmagic_capabilities.c tests/test_pqmagic_sign_build.py
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/src/libstrongswan \

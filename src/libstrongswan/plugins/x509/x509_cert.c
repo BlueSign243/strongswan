@@ -1596,6 +1596,23 @@ static bool parse_certificate(private_x509_cert_t *this)
 				}
 				break;
 			case X509_OBJ_SIGNATURE:
+				if (this->scheme->scheme == SIGN_AIGIS_SIG2_SM3 ||
+					this->scheme->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512)
+				{
+					chunk_t canonical, alg;
+					bool valid;
+					size_t expected = this->scheme->scheme == SIGN_AIGIS_SIG2_SM3 ? 2445 : 2509;
+					if (object.len != expected + 1 || object.ptr[0] ||
+						!signature_params_build(this->scheme, &alg))
+					{
+						goto end;
+					}
+					canonical = asn1_wrap(ASN1_SEQUENCE, "cmm", this->tbsCertificate, alg,
+						asn1_bitstring("c", chunk_skip(object, 1)));
+					valid = chunk_equals(canonical, this->encoding);
+					chunk_free(&canonical);
+					if (!valid) { goto end; }
+				}
 				this->signature = chunk_skip(object, 1);
 				break;
 			default:
@@ -2274,6 +2291,7 @@ static bool generate(private_x509_cert_t *cert, certificate_t *sign_cert,
 					 private_key_t *sign_key, int digest_alg)
 {
 	const chunk_t keyUsageCrlSign = chunk_from_chars(0x01, 0x02);
+	const chunk_t keyUsageDigitalSignature = chunk_from_chars(0x07, 0x80);
 	const chunk_t keyUsageCertSignCrlSign = chunk_from_chars(0x01, 0x06);
 	chunk_t extensions = chunk_empty, certPolicies = chunk_empty;
 	chunk_t basicConstraints = chunk_empty, nameConstraints = chunk_empty;
@@ -2396,6 +2414,13 @@ static bool generate(private_x509_cert_t *cert, certificate_t *sign_cert,
 	else if (cert->flags & X509_CRL_SIGN)
 	{
 		keyUsageBits = keyUsageCrlSign;
+	}
+	/* Experimental signature-only leaf keys have an explicit digitalSignature
+	 * usage. Preserve existing algorithms' certificate encoding behavior. */
+	else if (cert->public_key->get_type(cert->public_key) == KEY_AIGIS_SIG2_SM3 ||
+			 cert->public_key->get_type(cert->public_key) == KEY_COMPOSITE_AIGIS_SIG2_ED25519)
+	{
+		keyUsageBits = keyUsageDigitalSignature;
 	}
 	if (keyUsageBits.len)
 	{

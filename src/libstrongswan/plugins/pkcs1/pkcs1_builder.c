@@ -67,6 +67,14 @@ static public_key_t *parse_public_key(chunk_t blob)
 					 * generating signatures with the associated private key */
 					type = KEY_RSA;
 				}
+				else if (oid == OID_AIGIS_SIG2_SM3 ||
+						 oid == OID_AIGIS_SIG2_ED25519_SHA512)
+				{
+					type = key_type_from_signature_scheme(signature_scheme_from_oid(oid));
+					key = lib->creds->create(lib->creds, CRED_PUBLIC_KEY, type,
+						BUILD_BLOB_ASN1_DER, blob, BUILD_END);
+					goto end;
+				}
 				else if (oid == OID_EC_PUBLICKEY)
 				{
 					/* Need the whole subjectPublicKeyInfo for EC public keys */

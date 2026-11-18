@@ -50,6 +50,16 @@ static int pub()
 					type = CRED_PRIVATE_KEY;
 					subtype = KEY_RSA;
 				}
+				else if (streq(arg, "aigissig2sm3"))
+				{
+					type = CRED_PRIVATE_KEY;
+					subtype = KEY_AIGIS_SIG2_SM3;
+				}
+				else if (streq(arg, "aigissig2ed25519"))
+				{
+					type = CRED_PRIVATE_KEY;
+					subtype = KEY_COMPOSITE_AIGIS_SIG2_ED25519;
+				}
 				else if (streq(arg, "ecdsa"))
 				{
 					type = CRED_PRIVATE_KEY;
@@ -190,7 +200,7 @@ static void __attribute__ ((constructor))reg()
 	command_register((command_t) {
 		pub, 'p', "pub",
 		"extract the public key from a private key/certificate",
-		{"[--in file|--keyid hex] [--type rsa|ecdsa|priv|pub|pkcs10|x509]",
+		{"[--in file|--keyid hex] [--type rsa|aigissig2sm3|aigissig2ed25519|ecdsa|priv|pub|pkcs10|x509]",
 		 "[--outform der|pem|dnskey|sshkey]"},
 		{
 			{"help",	'h', 0, "show usage information"},

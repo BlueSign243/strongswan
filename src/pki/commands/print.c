@@ -106,6 +106,16 @@ static int print()
 					type = CRED_PRIVATE_KEY;
 					subtype = KEY_ECDSA;
 				}
+				else if (streq(arg, "aigissig2sm3"))
+				{
+					type = CRED_PRIVATE_KEY;
+					subtype = KEY_AIGIS_SIG2_SM3;
+				}
+				else if (streq(arg, "aigissig2ed25519"))
+				{
+					type = CRED_PRIVATE_KEY;
+					subtype = KEY_COMPOSITE_AIGIS_SIG2_ED25519;
+				}
 				else if (streq(arg, "ed25519") ||
 						 streq(arg, "ed25519-priv"))
 				{
@@ -206,7 +216,7 @@ static void __attribute__ ((constructor))reg()
 		{ print, 'a', "print",
 		"print a credential in a human readable form",
 		{"[--in file|--keyid hex]",
-		 "[--type x509|crl|ac|pub|priv|rsa|ecdsa|ed25519|ed448|ocsp-req|ocsp-rsp]"},
+		 "[--type x509|crl|ac|pub|priv|rsa|aigissig2sm3|aigissig2ed25519|ecdsa|ed25519|ed448|ocsp-req|ocsp-rsp]"},
 		{
 			{"help",	'h', 0, "show usage information"},
 			{"in",		'i', 1, "input file, default: stdin"},

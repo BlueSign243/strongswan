@@ -48,6 +48,10 @@ enum key_type_t {
 	KEY_ED25519 = 4,
 	/** Ed448   PureEdDSA instance as in RFC 8032 */
 	KEY_ED448   = 5,
+	/** Experimental Aigis-sig mode 2 / SM3 */
+	KEY_AIGIS_SIG2_SM3 = 6,
+	/** Fixed Aigis-sig mode 2 / SM3 + Pure Ed25519 composite */
+	KEY_COMPOSITE_AIGIS_SIG2_ED25519 = 7,
 };
 
 /**
@@ -109,6 +113,8 @@ enum signature_scheme_t {
 	SIGN_ED25519,
 	/** PureEdDSA on Curve448 as in RFC 8410                           */
 	SIGN_ED448,
+	SIGN_AIGIS_SIG2_SM3,
+	SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512,
 };
 
 /**

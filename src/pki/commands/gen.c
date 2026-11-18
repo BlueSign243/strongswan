@@ -41,6 +41,14 @@ static int gen()
 				{
 					type = KEY_RSA;
 				}
+				else if (streq(arg, "aigissig2sm3"))
+				{
+					type = KEY_AIGIS_SIG2_SM3;
+				}
+				else if (streq(arg, "aigissig2ed25519"))
+				{
+					type = KEY_COMPOSITE_AIGIS_SIG2_ED25519;
+				}
 				else if (streq(arg, "ecdsa"))
 				{
 					type = KEY_ECDSA;
@@ -106,6 +114,8 @@ static int gen()
 			case KEY_ECDSA:
 				size = 384;
 				break;
+			case KEY_AIGIS_SIG2_SM3:
+			case KEY_COMPOSITE_AIGIS_SIG2_ED25519:
 			case KEY_ED25519:
 				size = 256;
 				break;
@@ -167,7 +177,7 @@ static void __attribute__ ((constructor))reg()
 {
 	command_register((command_t) {
 		gen, 'g', "gen", "generate a new private key",
-		{"[--type rsa|ecdsa|ed25519|ed448] [--size bits] [--safe-primes]",
+		{"[--type rsa|aigissig2sm3|aigissig2ed25519|ecdsa|ed25519|ed448] [--size bits] [--safe-primes]",
 		 "[--shares n] [--threshold l] [--outform der|pem]"},
 		{
 			{"help",		'h', 0, "show usage information"},

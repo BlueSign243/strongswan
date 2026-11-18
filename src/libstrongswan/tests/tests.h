@@ -54,6 +54,11 @@ TEST_SUITE(proposal_suite_create)
 #ifdef HAVE_PQMAGIC
 TEST_SUITE(pqmagic_kem_suite_create)
 #endif
+#ifdef HAVE_PQMAGIC_SIGN
+TEST_SUITE(aigis_sig_suite_create)
+TEST_SUITE(composite_aigis_sig_suite_create)
+TEST_SUITE(pqmagic_credentials_suite_create)
+#endif
 TEST_SUITE(crypto_factory_suite_create)
 TEST_SUITE_DEPEND(iv_gen_suite_create, RNG, RNG_STRONG)
 TEST_SUITE(pen_suite_create)

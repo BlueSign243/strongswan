@@ -15,3 +15,10 @@ libstrongswan_pqmagic_la_SOURCES = \
 
 libstrongswan_pqmagic_la_LDFLAGS = -module -avoid-version
 libstrongswan_pqmagic_la_LIBADD = $(PQMAGIC_LIBS)
+
+if USE_PQMAGIC_SIGN
+libstrongswan_pqmagic_la_SOURCES += \
+    pqmagic_sig_params.h pqmagic_aigis_sig.c pqmagic_aigis_sig.h \
+    pqmagic_composite_sig.c pqmagic_composite_sig.h \
+    pqmagic_sig_encoding.c pqmagic_sig_encoding.h
+endif

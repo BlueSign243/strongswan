@@ -150,6 +150,10 @@ enum cred_encoding_part_t {
 	/** a DER encoded EdDSA private key */
 	CRED_PART_EDDSA_PRIV_ASN1_DER,
 	CRED_PART_END,
+	/** Complete canonical SubjectPublicKeyInfo DER. */
+	CRED_PART_SPKI_ASN1_DER,
+	/** Complete canonical PrivateKeyInfo DER; caller must wipe. */
+	CRED_PART_PKCS8_ASN1_DER,
 };
 
 /**

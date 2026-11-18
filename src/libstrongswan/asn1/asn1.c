@@ -57,6 +57,8 @@ chunk_t asn1_algorithmIdentifier(int oid)
 		case OID_ECDSA_WITH_SHA384:
 		case OID_ECDSA_WITH_SHA512:
 		case OID_ED25519:
+		case OID_AIGIS_SIG2_SM3:
+		case OID_AIGIS_SIG2_ED25519_SHA512:
 		case OID_ED448:
 			parameters = chunk_empty;
 			break;

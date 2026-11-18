@@ -146,6 +146,7 @@ ARG_ENABL_SET([md4],            [enable MD4 software implementation plugin.])
 ARG_ENABL_SET([md5],            [enable MD5 software implementation plugin.])
 ARG_ENABL_SET([mgf1],           [enable the MGF1 software implementation plugin.])
 ARG_ENABL_SET([ml],             [enable Module-Lattice-based crypto (ML-KEM) plugin.])
+ARG_ENABL_SET([pqmagic-sign],   [enable experimental Aigis-sig composite signatures (requires pqmagic).])
 ARG_ENABL_SET([pqmagic],        [enable PQMagic Aigis-enc mode 2 SM3 plugin.])
 ARG_DISBL_SET([nonce],          [disable nonce generation plugin.])
 ARG_DISBL_SET([openssl],        [disable the OpenSSL crypto plugin.])
@@ -1261,6 +1262,9 @@ fi
 
 AC_ARG_VAR([PQMAGIC_CFLAGS], [C compiler flags for PQMagic])
 AC_ARG_VAR([PQMAGIC_LIBS], [linker flags for PQMagic (default: -lpqmagic_std)])
+if test x$pqmagic_sign = xtrue && test x$pqmagic != xtrue; then
+	AC_MSG_ERROR([pqmagic-sign requires --enable-pqmagic])
+fi
 if test x$pqmagic = xtrue; then
 	if test -z "$PQMAGIC_LIBS"; then
 		PQMAGIC_LIBS="-lpqmagic_std"
@@ -1285,6 +1289,22 @@ if test x$pqmagic = xtrue; then
 		return r;
 	]])], [AC_MSG_RESULT([yes])],
 		[AC_MSG_ERROR([PQMagic Aigis-enc mode 2 std APIs not found; set PQMAGIC_LIBS])])
+	if test x$pqmagic_sign = xtrue; then
+		AC_MSG_CHECKING([for PQMagic Aigis-sig mode 2 std APIs])
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <pqmagic_api.h>]], [[
+			unsigned char pk[AIGIS_SIG2_PUBLICKEYBYTES], sk[AIGIS_SIG2_SECRETKEYBYTES];
+			unsigned char sig[AIGIS_SIG2_SIGBYTES], seed[32] = {0};
+			size_t n;
+			int r = pqmagic_aigis_sig2_std_keypair_internal(pk, sk, seed);
+			r |= pqmagic_aigis_sig2_std_signature_internal(sig, &n, seed, 32, sk);
+			r |= pqmagic_aigis_sig2_std_verify_internal(sig, n, seed, 32, pk);
+			r |= pqmagic_aigis_sig2_std_signature(sig, &n, seed, 32, seed, 0, sk);
+			r |= pqmagic_aigis_sig2_std_verify(sig, n, seed, 32, seed, 0, pk);
+			return r;
+		]])], [AC_MSG_RESULT([yes])],
+			[AC_MSG_ERROR([PQMagic Aigis-sig mode 2 std APIs not found; build with --with-sign])])
+		AC_DEFINE([HAVE_PQMAGIC_SIGN], [1], [Define if PQMagic signatures are enabled.])
+	fi
 	CPPFLAGS="$pqmagic_save_CPPFLAGS"
 	LIBS="$pqmagic_save_LIBS"
 	AC_DEFINE([HAVE_PQMAGIC], [1], [Define if the PQMagic plugin is enabled.])
@@ -1533,7 +1553,7 @@ ADD_PLUGIN([ctr],                  [s charon scripts nm cmd])
 ADD_PLUGIN([ccm],                  [s charon scripts nm cmd])
 ADD_PLUGIN([gcm],                  [s charon scripts nm cmd])
 ADD_PLUGIN([ml],                   [s charon scripts nm cmd])
-ADD_PLUGIN([pqmagic],              [s charon scripts nm cmd])
+ADD_PLUGIN([pqmagic],              [s charon scripts nm cmd pki swanctl])
 ADD_PLUGIN([drbg],                 [s charon swanctl pki scripts nm cmd])
 ADD_PLUGIN([curl],                 [s charon pki scripts nm cmd])
 ADD_PLUGIN([files],                [s charon pki scripts nm cmd])
@@ -1687,6 +1707,7 @@ AM_CONDITIONAL(USE_GCM, test x$gcm = xtrue)
 AM_CONDITIONAL(USE_DRBG, test x$drbg = xtrue)
 AM_CONDITIONAL(USE_ML, test x$ml = xtrue)
 AM_CONDITIONAL(USE_PQMAGIC, test x$pqmagic = xtrue)
+AM_CONDITIONAL(USE_PQMAGIC_SIGN, test x$pqmagic_sign = xtrue)
 
 #  charon plugins
 # ----------------

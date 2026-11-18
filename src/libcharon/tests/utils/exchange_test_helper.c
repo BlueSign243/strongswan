@@ -105,6 +105,7 @@ static ike_cfg_t *create_ike_cfg(bool initiator, exchange_test_sa_conf_t *conf)
 
 	if (conf)
 	{
+		ike.fragmentation = initiator ? conf->initiator.fragmentation : conf->responder.fragmentation;
 		ike.childless = initiator ? conf->initiator.childless
 								  : conf->responder.childless;
 		proposals = initiator ? conf->initiator.ike : conf->responder.ike;
@@ -182,6 +183,17 @@ static void add_auth_cfg(peer_cfg_t *peer_cfg, bool initiator, bool local,
 	if (eap)
 	{
 		auth->add(auth, AUTH_RULE_EAP_TYPE, EAP_GTC);
+	}
+	if (conf && conf->initiator.auth && conf->responder.auth)
+	{
+		char *constraint = initiator == local ? conf->initiator.auth : conf->responder.auth;
+		certificate_t *cert = initiator ? conf->initiator.cert : conf->responder.cert;
+		certificate_t *ca = initiator ? conf->initiator.ca : conf->responder.ca;
+		auth->add(auth, AUTH_RULE_AUTH_CLASS, AUTH_CLASS_PUBKEY);
+		auth->add_pubkey_constraints(auth, local && streq(constraint, "aigissig2ed25519-sha512") ?
+			"ike:aigissig2ed25519-sha512" : constraint, TRUE);
+		if (local && cert) { auth->add(auth, AUTH_RULE_SUBJECT_CERT, cert->get_ref(cert)); }
+		if (!local && ca) { auth->add(auth, AUTH_RULE_CA_CERT, ca->get_ref(ca)); }
 	}
 	auth->add(auth, AUTH_RULE_IDENTITY, identification_create_from_string(id));
 	peer_cfg->add_auth_cfg(peer_cfg, auth, local);

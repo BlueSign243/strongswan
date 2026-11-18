@@ -95,6 +95,14 @@ static int self()
 				{
 					type = KEY_RSA;
 				}
+				else if (streq(arg, "aigissig2sm3"))
+				{
+					type = KEY_AIGIS_SIG2_SM3;
+				}
+				else if (streq(arg, "aigissig2ed25519"))
+				{
+					type = KEY_COMPOSITE_AIGIS_SIG2_ED25519;
+				}
 				else if (streq(arg, "ecdsa"))
 				{
 					type = KEY_ECDSA;
@@ -451,7 +459,7 @@ static void __attribute__ ((constructor))reg()
 	command_register((command_t) {
 		self, 's', "self",
 		"create a self signed certificate",
-		{"[--in file|--keyid hex] [--type rsa|ecdsa|ed25519|ed448|priv]",
+		{"[--in file|--keyid hex] [--type rsa|aigissig2sm3|aigissig2ed25519|ecdsa|ed25519|ed448|priv]",
 		 "--dn distinguished-name [--san subjectAltName]+",
 		 "[--lifetime days] [--serial hex] [--ca] [--ocsp uri]+",
 		 "[--flag serverAuth|clientAuth|crlSign|ocspSigning|msSmartcardLogon]+",

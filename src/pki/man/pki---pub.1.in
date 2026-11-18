@@ -54,6 +54,9 @@ Smartcard or TPM private key object handle in hex format with an optional
 Type of input. One of \fIpriv\fR (private key), \fIrsa\fR (RSA private key),
 \fIecdsa\fR (ECDSA private key), \fIpub\fR (public key), \fIpkcs10\fR (PKCS#10
 certificate request), or \fIx509\fR (X.509 certificate), defaults to \fIpriv\fR.
+The experimental private key types \fIaigissig2sm3\fR and
+\fIaigissig2ed25519\fR are also accepted. Their public keys can be exported
+as complete SubjectPublicKeyInfo in DER or PEM format.
 .TP
 .BI "\-f, \-\-outform " encoding
 Encoding of the extracted public key. One of \fIder\fR (ASN.1 DER), \fIpem\fR

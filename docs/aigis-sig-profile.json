@@ -1,0 +1,15 @@
+{
+  "profile": "AigisSig2-SM3+Ed25519+SHA512-v1",
+  "allocation": "UUIDv4 under ITU-T X.667 joint-iso-itu-t uuid(25); user authorized local generation on 2026-11-17",
+  "source": "https://www.itu.int/en/ITU-T/asn1/pages/uuid/uuids.aspx",
+  "algorithms": {
+    "aigis_sig2_sm3": {
+      "uuid": "24244e1a-667b-4075-9926-7040b2f98bf5",
+      "oid": "2.25.48040714654762008698679385395515984885"
+    },
+    "composite_aigis_sig2_ed25519_sha512": {
+      "uuid": "8e7d841a-883e-4318-922f-8d72b62c042a",
+      "oid": "2.25.189402091888940046385604693038199473194"
+    }
+  }
+}

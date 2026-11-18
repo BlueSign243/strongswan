@@ -146,6 +146,9 @@ hash_algorithm_t hasher_algorithm_from_oid(int oid)
 		case OID_SHA3_512:
 		case OID_RSASSA_PKCS1V15_WITH_SHA3_512:
 			return HASH_SHA3_512;
+		case OID_AIGIS_SIG2_ED25519_SHA512:
+			return HASH_SHA512;
+		case OID_AIGIS_SIG2_SM3:
 		case OID_ED25519:
 		case OID_ED448:
 			return HASH_IDENTITY;
@@ -446,6 +449,10 @@ int hasher_signature_algorithm_to_oid(hash_algorithm_t alg, key_type_t key)
 				default:
 					return OID_UNKNOWN;
 			}
+		case KEY_AIGIS_SIG2_SM3:
+			return alg == HASH_IDENTITY ? OID_AIGIS_SIG2_SM3 : OID_UNKNOWN;
+		case KEY_COMPOSITE_AIGIS_SIG2_ED25519:
+			return alg == HASH_SHA512 ? OID_AIGIS_SIG2_ED25519_SHA512 : OID_UNKNOWN;
 		case KEY_ED25519:
 			switch (alg)
 			{
@@ -486,6 +493,9 @@ hash_algorithm_t hasher_from_signature_scheme(signature_scheme_t scheme,
 				return pss->hash;
 			}
 			break;
+		case SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512:
+			return HASH_SHA512;
+		case SIGN_AIGIS_SIG2_SM3:
 		case SIGN_ED25519:
 		case SIGN_ED448:
 			return HASH_IDENTITY;

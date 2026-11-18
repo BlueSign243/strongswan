@@ -465,6 +465,12 @@ connections.<conn>.local<suffix>.auth = pubkey
 	RSASSA-PSS signatures will only be used if enabled in
 	**strongswan.conf**(5).
 
+	Experimental Aigis-sig composite authentication uses the exact token
+	_ike:aigissig2ed25519-sha512_ (M1) or _aigissig2ed25519-sha512_
+	(M2). Both select composite IKE signatures locally. Configure the
+	corresponding remote policy at both peers to enforce M2 certificate chains.
+	These profiles require the pqmagic-sign feature, Ed25519 and SHA-512.
+
 connections.<conn>.local<suffix>.id =
 	IKE identity to use for authentication round.
 
@@ -695,6 +701,13 @@ connections.<conn>.remote<suffix>.auth = pubkey
 	_rsa/pss_ instead of _pubkey_ or _rsa_ as in e.g. _rsa/pss-sha256_. If
 	_pubkey_ or _rsa_ constraints are configured RSASSA-PSS signatures will only
 	be accepted if enabled in **strongswan.conf**(5).
+
+	Experimental _ike:aigissig2ed25519-sha512_ requires composite IKE
+	authentication while allowing a classical certificate chain (M1). The exact
+	token _aigissig2ed25519-sha512_ additionally requires a validated composite
+	X.509 chain and an explicit matching **cacerts** constraint (M2). Raw public
+	keys, directly trusted leaves and empty chain evidence do not satisfy M2.
+	Additional suffixes or alternate digests are rejected.
 
 	To specify trust chain constraints for EAP-(T)TLS, append a colon to the
 	EAP method, followed by the key type/size and hash algorithm as discussed

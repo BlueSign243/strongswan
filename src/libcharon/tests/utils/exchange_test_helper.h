@@ -114,6 +114,12 @@ struct exchange_test_sa_conf_t {
 		childless_t childless;
 		/** Use EAP authentication */
 		bool eap;
+		/** Optional fixed public-key auth constraints and local certificate. */
+		char *auth;
+		fragmentation_t fragmentation;
+		certificate_t *cert;
+		/** Explicit CA for validating the remote endpoint. */
+		certificate_t *ca;
 	} initiator, responder;
 };
 

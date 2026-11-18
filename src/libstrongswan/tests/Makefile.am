@@ -1,4 +1,5 @@
 check_LTLIBRARIES = libtest.la
+EXTRA_DIST = data/aigis_sig_vectors.h
 
 libtest_la_SOURCES = \
   test_suite.c test_suite.h \
@@ -56,6 +57,7 @@ libstrongswan_tests_SOURCES = tests.h tests.c \
   suites/test_crypter.c \
   suites/test_proposal.c \
   suites/test_pqmagic_kem.c \
+  suites/test_aigis_sig.c \
   suites/test_crypto_factory.c \
   suites/test_iv_gen.c \
   suites/test_pen.c \

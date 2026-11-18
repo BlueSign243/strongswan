@@ -24,3 +24,7 @@ TEST_SUITE(childless_suite_create)
 #ifdef HAVE_PQMAGIC
 TEST_SUITE(aigis_suite_create)
 #endif
+
+#ifdef HAVE_PQMAGIC_SIGN
+TEST_SUITE(aigis_sig_auth_suite_create)
+#endif

@@ -24,6 +24,7 @@
 #include <utils/identification.h>
 #include <eap/eap.h>
 #include <credentials/certificates/certificate.h>
+#include <credentials/certificates/x509.h>
 
 ENUM(auth_class_names, AUTH_CLASS_ANY, AUTH_CLASS_XAUTH,
 	"any",
@@ -602,6 +603,20 @@ METHOD(auth_cfg_t, add_pubkey_constraints, void,
 	auth_rule_t type;
 	void *value;
 
+	/* This profile is atomic: only these two complete strings add rules.
+	 * VICI rejects any other string containing the profile token. */
+	if (streq(constraints, "ike:aigissig2ed25519-sha512") ||
+		streq(constraints, "aigissig2ed25519-sha512"))
+	{
+		signature_params_t fixed = { .scheme = SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512 };
+		if (ike) { add(this, AUTH_RULE_IKE_SIGNATURE_SCHEME, signature_params_clone(&fixed)); }
+		if (!strpfx(constraints, "ike:"))
+		{
+			add(this, AUTH_RULE_SIGNATURE_SCHEME, signature_params_clone(&fixed));
+		}
+		return;
+	}
+
 	rsa_pss = lib->settings->get_bool(lib->settings, "%s.rsa_pss", FALSE,
 									  lib->ns);
 
@@ -824,6 +839,62 @@ static bool complies_scheme(private_auth_cfg_t *this, auth_cfg_t *constraints,
 	return success;
 }
 
+/** A fixed composite constraint must have positive evidence, including an
+ * actual non-anchor X.509 chain for M2. Generic constraints historically allow
+ * empty scheme sets; preserve that behavior for existing algorithms. */
+static bool composite_evidence(private_auth_cfg_t *this, auth_cfg_t *constraints)
+{
+	enumerator_t *e, *cae;
+	auth_rule_t rule, crule;
+	signature_params_t *p;
+	void *v, *cv;
+	bool valid = TRUE, ike = FALSE, chain = FALSE, seen_ike = FALSE, seen_chain = FALSE, ca_match = FALSE;
+	certificate_t *subject = get(this, AUTH_RULE_SUBJECT_CERT), *ca;
+
+	e = constraints->create_enumerator(constraints);
+	while (e->enumerate(e, &rule, &p))
+	{
+		if (rule == AUTH_RULE_IKE_SIGNATURE_SCHEME && p->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512) { ike = TRUE; }
+		if (rule == AUTH_RULE_SIGNATURE_SCHEME && p->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512) { chain = TRUE; }
+	}
+	e->destroy(e);
+	if (!ike && !chain) { return TRUE; }
+	e = create_enumerator(this);
+	while (e->enumerate(e, &rule, &v))
+	{
+		p = v;
+		if (rule == AUTH_RULE_IKE_SIGNATURE_SCHEME)
+		{
+			if (p->scheme != SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512 || p->params) { valid = FALSE; break; }
+			seen_ike = TRUE;
+		}
+		if (chain && rule == AUTH_RULE_SIGNATURE_SCHEME)
+		{
+			if (p->scheme != SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512 || p->params) { valid = FALSE; break; }
+			seen_chain = TRUE;
+		}
+		if (chain && rule == AUTH_RULE_CA_CERT && subject)
+		{
+			ca = v;
+			cae = constraints->create_enumerator(constraints);
+			while (cae->enumerate(cae, &crule, &cv))
+			{
+				if (crule == AUTH_RULE_CA_CERT && ca->equals(ca, cv) &&
+					!subject->equals(subject, ca)) { ca_match = TRUE; }
+			}
+			cae->destroy(cae);
+		}
+	}
+	e->destroy(e);
+	if (!valid || (ike && !seen_ike)) { return FALSE; }
+	if (chain)
+	{
+		return seen_chain && ca_match && subject && subject->get_type(subject) == CERT_X509 &&
+			!(((x509_t*)subject)->get_flags((x509_t*)subject) & X509_CA);
+	}
+	return TRUE;
+}
+
 METHOD(auth_cfg_t, complies, bool,
 	private_auth_cfg_t *this, auth_cfg_t *constraints, bool log_error)
 {
@@ -837,6 +908,11 @@ METHOD(auth_cfg_t, complies, bool,
 	auth_rule_t t1, t2;
 	void *value;
 
+	if (!composite_evidence(this, constraints))
+	{
+		if (log_error) { DBG1(DBG_CFG, "composite authentication lacks required signature/chain/CA evidence"); }
+		return FALSE;
+	}
 	e1 = constraints->create_enumerator(constraints);
 	while (e1->enumerate(e1, &t1, &value))
 	{

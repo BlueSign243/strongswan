@@ -240,6 +240,7 @@ static void free_cert_data(cert_data_t *data)
 typedef struct {
 	request_data_t *request;
 	auth_cfg_t *cfg;
+	bool local;
 	array_t *pubkeys;
 	uint32_t round;
 } auth_data_t;
@@ -1163,14 +1164,26 @@ CALLBACK(parse_dscp, bool,
  * Parse authentication config
  */
 CALLBACK(parse_auth, bool,
-	auth_cfg_t *cfg, chunk_t v)
+	auth_data_t *auth, chunk_t v)
 {
+	auth_cfg_t *cfg = auth->cfg;
 	char buf[64], *pos;
 	eap_vendor_type_t *type;
 
 	if (!vici_stringify(v, buf, sizeof(buf)))
 	{
 		return FALSE;
+	}
+	if (strcasestr(buf, "aigissig"))
+	{
+		signature_params_t *fixed;
+		if (!streq(buf, "ike:aigissig2ed25519-sha512") &&
+			!streq(buf, "aigissig2ed25519-sha512")) { return FALSE; }
+		cfg->add_pubkey_constraints(cfg, auth->local ? "ike:aigissig2ed25519-sha512" : buf, TRUE);
+		fixed = cfg->get(cfg, AUTH_RULE_IKE_SIGNATURE_SCHEME);
+		if (!fixed || fixed->scheme != SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512) { return FALSE; }
+		cfg->add(cfg, AUTH_RULE_AUTH_CLASS, AUTH_CLASS_PUBKEY);
+		return TRUE;
 	}
 	if (strpfx(buf, "ike:") ||
 		strpfx(buf, "pubkey") ||
@@ -1673,7 +1686,7 @@ CALLBACK(auth_kv, bool,
 	auth_data_t *auth, vici_message_t *message, char *name, chunk_t value)
 {
 	vici_parse_rule_t rules[] = {
-		VICI_RULE_CUSTOM("auth", auth->cfg, parse_auth),
+		VICI_RULE_CUSTOM("auth", auth, parse_auth),
 		VICI_RULE_CUSTOM("id", auth->cfg, parse_ike_id),
 		VICI_RULE_CUSTOM("ca_id", auth->cfg, parse_ca_id),
 		VICI_RULE_CUSTOM("aaa_id", auth->cfg, parse_aaa_id),
@@ -1998,12 +2011,25 @@ CALLBACK(peer_sn, bool,
 		INIT(auth,
 			.request = peer->request,
 			.cfg = auth_cfg_create(),
+			.local = strcasepfx(name, "local"),
 		);
 
 		if (!message->parse(message, ctx, auth_sn, auth_kv, auth_li, auth))
 		{
 			free_auth_data(auth);
 			return FALSE;
+		}
+		/* M2 needs a named trust anchor on the remote side. Local selection
+		 * binds its certificate/key; remote validation enforces the chain. */
+		if (strcasepfx(name, "remote"))
+		{
+			signature_params_t *fixed = auth->cfg->get(auth->cfg, AUTH_RULE_SIGNATURE_SCHEME);
+			if (fixed && fixed->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512 &&
+				!auth->cfg->get(auth->cfg, AUTH_RULE_CA_CERT))
+			{
+				free_auth_data(auth);
+				return FALSE;
+			}
 		}
 		id = auth->cfg->get(auth->cfg, AUTH_RULE_IDENTITY);
 

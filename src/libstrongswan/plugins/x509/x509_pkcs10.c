@@ -627,6 +627,23 @@ static bool parse_certificate_request(private_x509_pkcs10_t *this)
 				}
 				break;
 			case PKCS10_SIGNATURE:
+				if (this->scheme->scheme == SIGN_AIGIS_SIG2_SM3 ||
+					this->scheme->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512)
+				{
+					chunk_t canonical, alg;
+					bool valid;
+					size_t expected = this->scheme->scheme == SIGN_AIGIS_SIG2_SM3 ? 2445 : 2509;
+					if (object.len != expected + 1 || object.ptr[0] ||
+						!signature_params_build(this->scheme, &alg))
+					{
+						goto end;
+					}
+					canonical = asn1_wrap(ASN1_SEQUENCE, "cmm", this->certificationRequestInfo, alg,
+						asn1_bitstring("c", chunk_skip(object, 1)));
+					valid = chunk_equals(canonical, this->encoding);
+					chunk_free(&canonical);
+					if (!valid) { goto end; }
+				}
 				this->signature = chunk_skip(object, 1);
 				break;
 			default:

@@ -81,6 +81,7 @@ static bool parse_signature_auth_data(chunk_t *auth_data, key_type_t *key_type,
 									  signature_params_t *params)
 {
 	uint8_t len;
+	chunk_t alg, rest, body;
 
 	if (!auth_data->len)
 	{
@@ -88,7 +89,17 @@ static bool parse_signature_auth_data(chunk_t *auth_data, key_type_t *key_type,
 	}
 	len = auth_data->ptr[0];
 	*auth_data = chunk_skip(*auth_data, 1);
-	if (!signature_params_parse(*auth_data, 1, params))
+	if (!len || len > auth_data->len) { return FALSE; }
+	alg = chunk_create(auth_data->ptr, len);
+	rest = alg;
+	if (asn1_unwrap(&rest, &body) != ASN1_SEQUENCE || rest.len ||
+		!signature_params_parse(alg, 1, params))
+	{
+		return FALSE;
+	}
+	if ((params->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512 &&
+		 auth_data->len - len != 2509) ||
+		(params->scheme == SIGN_AIGIS_SIG2_SM3 && auth_data->len - len != 2445))
 	{
 		return FALSE;
 	}
@@ -157,6 +168,12 @@ static bool build_signature_auth_data(chunk_t *auth_data,
 
 	if (!signature_params_build(params, &data))
 	{
+		chunk_free(auth_data);
+		return FALSE;
+	}
+	if (!data.len || data.len > UINT8_MAX)
+	{
+		chunk_free(&data);
 		chunk_free(auth_data);
 		return FALSE;
 	}

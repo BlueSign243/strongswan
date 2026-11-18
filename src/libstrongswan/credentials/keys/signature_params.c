@@ -196,6 +196,15 @@ bool signature_params_parse(chunk_t asn1, int level0,
 	{
 		case SIGN_UNKNOWN:
 			return FALSE;
+		case SIGN_AIGIS_SIG2_SM3:
+		case SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512:
+		{
+			chunk_t canonical = asn1_algorithmIdentifier(oid);
+			bool valid = chunk_equals(asn1, canonical);
+			chunk_free(&canonical);
+			if (!valid) { return FALSE; }
+			break;
+		}
 		case SIGN_RSA_EMSA_PSS:
 		{
 			rsa_pss_params_t *pss = malloc_thing(rsa_pss_params_t);
@@ -231,6 +240,12 @@ bool signature_params_build(signature_params_t *params, chunk_t *asn1)
 	chunk_t parameters = chunk_empty;
 	int oid;
 
+	*asn1 = chunk_empty;
+	if ((params->scheme == SIGN_AIGIS_SIG2_SM3 ||
+		 params->scheme == SIGN_COMPOSITE_AIGIS_SIG2_ED25519_SHA512) && params->params)
+	{
+		return FALSE;
+	}
 	oid = signature_scheme_to_oid(params->scheme);
 	if (oid == OID_UNKNOWN)
 	{

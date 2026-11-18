@@ -15,6 +15,13 @@ endif
 ACLOCAL_AMFLAGS = -I m4/config
 
 EXTRA_DIST = Doxyfile.in LICENSE Android.common.mk.in Android.common.mk Android.mk
+EXTRA_DIST += docs/aigis-sig-profile.json docs/aigis-sig-build-and-test.md \
+  docs/aigis-sig-implementation-progress.md \
+  testing/tests/ikev2/host2host-aigissig/README.md \
+  testing/tests/ikev2/host2host-aigissig/moon-m1.conf \
+  testing/tests/ikev2/host2host-aigissig/sun-m1.conf \
+  testing/tests/ikev2/host2host-aigissig/moon-m2.conf \
+  testing/tests/ikev2/host2host-aigissig/sun-m2.conf
 CLEANFILES = Doxyfile
 BUILT_SOURCES = Android.common.mk
 MAINTAINERCLEANFILES = Android.common.mk
