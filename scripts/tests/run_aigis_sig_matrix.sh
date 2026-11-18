@@ -10,11 +10,13 @@ rsync -a --exclude='.git' --exclude='.codegraph' --exclude='.local-pqmagic' \
 cd "$matrix_source"
 common='--disable-defaults --enable-openssl --enable-random --enable-drbg --enable-pki --enable-x509 --enable-pubkey --enable-pkcs1 --enable-pkcs8 --enable-pem'
 ./configure $common --disable-pqmagic --enable-pqmagic-sign > ../invalid-options.log 2>&1 && exit 1
-rg 'pqmagic-sign requires' ../invalid-options.log
+rg -q 'pqmagic-sign requires' ../invalid-options.log
+printf '%s\n' '[PASS] Expected configure rejection: signatures enabled with pqmagic disabled (log: .local-pqmagic/matrix/invalid-options.log)'
 ./configure $common --enable-pqmagic --enable-pqmagic-sign \
   PQMAGIC_CFLAGS="-I$matrix_root/.local-pqmagic/install/include" \
   PQMAGIC_LIBS="-L$matrix_root/.local-pqmagic/install/lib -Wl,-rpath,$matrix_root/.local-pqmagic/install/lib -lpqmagic_std" > ../missing-api.log 2>&1 && exit 1
-rg 'Aigis-sig mode 2 std APIs not found' ../missing-api.log
+rg -q 'Aigis-sig mode 2 std APIs not found' ../missing-api.log
+printf '%s\n' '[PASS] Expected configure rejection: legacy KEM-only library lacks signature APIs (log: .local-pqmagic/matrix/missing-api.log)'
 ./configure $common --disable-pqmagic > ../disabled-config.log 2>&1
 make -C src/libstrongswan -j4 > ../disabled-build.log 2>&1
 TESTS_SUITES=auth_cfg make -C src/libstrongswan/tests check > ../disabled-tests.log 2>&1

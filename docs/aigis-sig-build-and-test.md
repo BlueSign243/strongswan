@@ -69,6 +69,8 @@ make check
 
 矩阵脚本在 `.local-pqmagic/matrix/source` 建立本地副本，验证关闭插件、旧 KEM-only 库及两种预期失败配置；不改当前构建。变异测试在临时目录编译只检查一个分量的插件，要求现有向量/篡改测试将其检出，不改正常插件。
 
+矩阵中的“关闭 pqmagic 却开启签名”和“开启签名却链接旧 KEM-only 库”必须被 configure 拒绝。脚本将这两项显示为 `[PASS] Expected configure rejection`，原始 `configure: error:` 保留在对应日志中；旧版脚本会直接打印这些预期错误。最终输出 `Build matrix: ... passed` 且退出码为 0 表示矩阵通过，无需为这两项错误修改配置。
+
 可选内存检测：
 
 ```bash
